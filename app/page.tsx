@@ -2,27 +2,45 @@
 
 import { useState, useEffect } from 'react';
 
-const WORDS = [
-  { word: 'ELEPHANT', hint: 'Largest land animal with a long trunk' },
-  { word: 'MOUNTAIN', hint: 'Very tall landform, great for hiking' },
-  { word: 'BUTTERFLY', hint: 'Colorful insect with wings' },
+type Difficulty = 'easy' | 'medium' | 'hard' | null;
+
+const EASY_WORDS = [
+  { word: 'ELEPHANT', hint: 'Large animal with big ears' },
+  { word: 'RAINBOW', hint: 'Colorful after rain' },
+  { word: 'BUTTERFLY', hint: 'Flying insect' },
+  { word: 'MOUNTAIN', hint: 'Very tall' },
+  { word: 'HOSPITAL', hint: 'Medical place' },
+  { word: 'DINOSAUR', hint: 'Extinct reptile' },
+  { word: 'VOLCANO', hint: 'Erupts lava' },
+  { word: 'CARNIVAL', hint: 'Fun fair' },
+  { word: 'CHAMPION', hint: 'Winner' },
+  { word: 'JOURNEY', hint: 'A trip' },
+];
+
+const MEDIUM_WORDS = [
   { word: 'CHOCOLATE', hint: 'Sweet brown treat made from cocoa' },
   { word: 'ADVENTURE', hint: 'An exciting journey or experience' },
-  { word: 'RAINBOW', hint: 'Colorful arc that appears after rain' },
-  { word: 'HOSPITAL', hint: 'Place where doctors treat sick people' },
-  { word: 'TELESCOPE', hint: 'Tool to see stars and planets' },
-  { word: 'DINOSAUR', hint: 'Extinct prehistoric creature' },
   { word: 'FESTIVAL', hint: 'A celebration or event with music and food' },
   { word: 'TREASURE', hint: 'Valuable hidden items or riches' },
   { word: 'MYSTERY', hint: 'Something unknown or puzzling' },
   { word: 'PASSPORT', hint: 'Document needed for international travel' },
-  { word: 'VOLCANO', hint: 'Mountain that erupts with lava' },
-  { word: 'CARNIVAL', hint: 'Fun fair with rides and games' },
+  { word: 'TELESCOPE', hint: 'Tool to see stars and planets' },
   { word: 'UNIVERSE', hint: 'All of space and everything in it' },
   { word: 'PARADISE', hint: 'A perfect beautiful place' },
-  { word: 'CHAMPION', hint: 'Winner of a competition' },
-  { word: 'JOURNEY', hint: 'A long trip or adventure' },
   { word: 'WHISPER', hint: 'Speak very softly and quietly' },
+];
+
+const HARD_WORDS = [
+  { word: 'LABYRINTH', hint: 'Maze-like structure' },
+  { word: 'OBSCURE', hint: 'Not clear or well-known' },
+  { word: 'QUINTESSENTIAL', hint: 'Perfect example of something' },
+  { word: 'PARADIGM', hint: 'Framework or model' },
+  { word: 'SERENDIPITY', hint: 'Lucky coincidence' },
+  { word: 'EPHEMERAL', hint: 'Short-lived, fleeting' },
+  { word: 'RECONNAISSANCE', hint: 'Military survey' },
+  { word: 'METICULOUS', hint: 'Very careful and precise' },
+  { word: 'INEFFABLE', hint: 'Cannot be described in words' },
+  { word: 'ANOMALY', hint: 'Something irregular' },
 ];
 
 const HANGMAN_STAGES = [
@@ -85,20 +103,56 @@ const HANGMAN_STAGES = [
 ];
 
 export default function HangmanGame() {
+  const [difficulty, setDifficulty] = useState<Difficulty>(null);
   const [wordObj, setWordObj] = useState<{ word: string; hint: string } | null>(null);
   const [guessedLetters, setGuessedLetters] = useState<Set<string>>(new Set());
   const [wrongGuesses, setWrongGuesses] = useState(0);
   const [gameOver, setGameOver] = useState(false);
   const [won, setWon] = useState(false);
 
+  const maxWrongGuesses = {
+    easy: 8,
+    medium: 6,
+    hard: 4,
+  };
+
+  const getWordList = (diff: Difficulty) => {
+    switch (diff) {
+      case 'easy':
+        return EASY_WORDS;
+      case 'medium':
+        return MEDIUM_WORDS;
+      case 'hard':
+        return HARD_WORDS;
+      default:
+        return MEDIUM_WORDS;
+    }
+  };
+
   // Initialize game
   useEffect(() => {
-    initializeGame();
-  }, []);
+    if (difficulty) {
+      initializeGame();
+    }
+  }, [difficulty]);
 
   const initializeGame = () => {
-    const randomWord = WORDS[Math.floor(Math.random() * WORDS.length)];
+    const wordList = getWordList(difficulty);
+    const randomWord = wordList[Math.floor(Math.random() * wordList.length)];
     setWordObj(randomWord);
+    setGuessedLetters(new Set());
+    setWrongGuesses(0);
+    setGameOver(false);
+    setWon(false);
+  };
+
+  const startNewGame = (diff: Difficulty) => {
+    setDifficulty(diff);
+  };
+
+  const resetToMenu = () => {
+    setDifficulty(null);
+    setWordObj(null);
     setGuessedLetters(new Set());
     setWrongGuesses(0);
     setGameOver(false);
@@ -116,7 +170,7 @@ export default function HangmanGame() {
       const newWrongGuesses = wrongGuesses + 1;
       setWrongGuesses(newWrongGuesses);
 
-      if (newWrongGuesses >= HANGMAN_STAGES.length - 1) {
+      if (newWrongGuesses >= (difficulty ? maxWrongGuesses[difficulty] : 6)) {
         setGameOver(true);
       }
     } else {
@@ -139,6 +193,48 @@ export default function HangmanGame() {
 
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
 
+  if (!difficulty) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
+        <div className="absolute top-0 left-0 w-96 h-96 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -z-10"></div>
+        <div className="absolute bottom-0 right-0 w-96 h-96 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 -z-10"></div>
+
+        <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl p-8 max-w-xl w-full border border-purple-500/20 backdrop-blur-xl text-center">
+          <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            🎮 Hangman
+          </h1>
+          <p className="text-purple-300/70 mb-8 text-lg">Select your difficulty level</p>
+
+          <div className="space-y-4">
+            <button
+              onClick={() => startNewGame('easy')}
+              className="w-full bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:shadow-2xl hover:shadow-green-500/50 text-lg mb-3"
+            >
+              🟢 Easy
+              <p className="text-sm font-normal mt-1 opacity-90">8 wrong guesses, simple words</p>
+            </button>
+
+            <button
+              onClick={() => startNewGame('medium')}
+              className="w-full bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:shadow-2xl hover:shadow-orange-500/50 text-lg mb-3"
+            >
+              🟡 Medium
+              <p className="text-sm font-normal mt-1 opacity-90">6 wrong guesses, balanced words</p>
+            </button>
+
+            <button
+              onClick={() => startNewGame('hard')}
+              className="w-full bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-500 hover:to-pink-500 text-white font-bold py-4 px-6 rounded-lg transition-all transform hover:shadow-2xl hover:shadow-red-500/50 text-lg"
+            >
+              🔴 Hard
+              <p className="text-sm font-normal mt-1 opacity-90">4 wrong guesses, challenging words</p>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center p-4">
       {/* Background decorative elements */}
@@ -147,9 +243,18 @@ export default function HangmanGame() {
 
       <div className="bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl shadow-2xl p-8 max-w-2xl w-full border border-purple-500/20 backdrop-blur-xl">
         {/* Title */}
-        <h1 className="text-5xl font-bold text-center mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-          🎮 Hangman
-        </h1>
+        <div className="flex items-center justify-between mb-6">
+          <h1 className="text-5xl font-bold bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            🎮 Hangman
+          </h1>
+          <span className={`px-4 py-2 rounded-lg font-bold text-sm ${
+            difficulty === 'easy' ? 'bg-green-500/20 text-green-400 border border-green-500/50' :
+            difficulty === 'medium' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50' :
+            'bg-red-500/20 text-red-400 border border-red-500/50'
+          }`}>
+            {difficulty?.toUpperCase()}
+          </span>
+        </div>
         <p className="text-center text-purple-300/70 mb-8 text-sm">Guess the word before you run out of tries!</p>
 
         <div className="grid grid-cols-2 gap-6">
@@ -161,20 +266,20 @@ export default function HangmanGame() {
             <div className="w-full">
               <div className="flex justify-between items-center mb-2">
                 <span className="text-slate-400 text-sm font-medium">Wrong Attempts</span>
-                <span className={`text-2xl font-bold ${wrongGuesses >= HANGMAN_STAGES.length - 1 ? 'text-red-500' : wrongGuesses >= 4 ? 'text-orange-400' : 'text-yellow-400'}`}>
-                  {wrongGuesses}/{HANGMAN_STAGES.length - 1}
+                <span className={`text-2xl font-bold ${wrongGuesses >= (difficulty ? maxWrongGuesses[difficulty] : 6) ? 'text-red-500' : wrongGuesses >= Math.ceil((difficulty ? maxWrongGuesses[difficulty] : 6) * 0.66) ? 'text-orange-400' : 'text-yellow-400'}`}>
+                  {wrongGuesses}/{difficulty ? maxWrongGuesses[difficulty] : 6}
                 </span>
               </div>
               <div className="w-full bg-slate-700/50 rounded-full h-2 border border-purple-500/20">
                 <div
                   className={`h-full rounded-full transition-all duration-300 ${
-                    wrongGuesses >= HANGMAN_STAGES.length - 1
+                    wrongGuesses >= (difficulty ? maxWrongGuesses[difficulty] : 6)
                       ? 'bg-red-500'
-                      : wrongGuesses >= 4
+                      : wrongGuesses >= Math.ceil((difficulty ? maxWrongGuesses[difficulty] : 6) * 0.66)
                       ? 'bg-orange-400'
                       : 'bg-green-500'
                   }`}
-                  style={{ width: `${(wrongGuesses / (HANGMAN_STAGES.length - 1)) * 100}%` }}
+                  style={{ width: `${(wrongGuesses / (difficulty ? maxWrongGuesses[difficulty] : 6)) * 100}%` }}
                 ></div>
               </div>
             </div>
@@ -237,13 +342,21 @@ export default function HangmanGame() {
           ))}
         </div>
 
-        {/* Reset Button */}
-        <button
-          onClick={initializeGame}
-          className="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3 rounded-lg transition-all transform hover:shadow-2xl hover:shadow-purple-500/50 text-lg"
-        >
-          🔄 New Game
-        </button>
+        {/* Button Group */}
+        <div className="flex gap-3">
+          <button
+            onClick={initializeGame}
+            className="flex-1 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold py-3 rounded-lg transition-all transform hover:shadow-2xl hover:shadow-purple-500/50"
+          >
+            🔄 New Game
+          </button>
+          <button
+            onClick={resetToMenu}
+            className="flex-1 bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-500 hover:to-slate-600 text-white font-bold py-3 rounded-lg transition-all transform hover:shadow-2xl hover:shadow-slate-500/50"
+          >
+            🏠 Menu
+          </button>
+        </div>
       </div>
     </div>
   );
